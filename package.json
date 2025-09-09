@@ -3,6 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
+            "@prisma/client": "^6.15.0",
             "@radix-ui/react-accordion": "^1.2.12",
             "@radix-ui/react-alert-dialog": "^1.1.15",
             "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -40,6 +41,7 @@
             "motion": "*",
             "next": "^14.2.15",
             "next-themes": "^0.4.6",
+            "prisma": "^6.15.0",
             "react": "^18.3.1",
             "react-day-picker": "^8.10.1",
             "react-dom": "^18.3.1",
@@ -48,6 +50,7 @@
             "recharts": "^2.15.2",
             "sonner": "^2.0.3",
             "tailwind-merge": "^3.3.1",
+            "tsx": "^4.20.5",
             "vaul": "^1.1.2"
       },
       "devDependencies": {
@@ -67,6 +70,15 @@
             "build": "next build",
             "start": "next start",
             "lint": "next lint",
-            "export": "next build && next export"
+            "export": "next build && next export",
+            "db:generate": "prisma generate",
+            "db:push": "prisma db push",
+            "db:migrate": "prisma migrate dev",
+            "db:seed": "tsx prisma/seed.ts",
+            "db:studio": "prisma studio",
+            "db:reset": "prisma migrate reset"
+      },
+      "prisma": {
+            "seed": "tsx prisma/seed.ts"
       }
 }

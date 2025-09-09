@@ -23,6 +23,7 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
     email: '',
     phone: '',
     location: '',
+    profilePicture: null as File | null,
     
     // Professional Info
     experience: '',
@@ -77,6 +78,23 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
     }));
   };
 
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      setFormData(prev => ({ ...prev, profilePicture: file }));
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
@@ -110,6 +128,42 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
               <User className="h-12 w-12 text-primary mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
               <p className="text-muted-foreground">Let's start with the basics</p>
+            </div>
+
+            {/* Profile Picture Upload */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-muted-foreground/25">
+                  {formData.profilePicture ? (
+                    <img
+                      src={URL.createObjectURL(formData.profilePicture)}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Camera className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <label
+                  htmlFor="profile-picture"
+                  className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors"
+                >
+                  <Upload className="h-4 w-4" />
+                </label>
+                <input
+                  id="profile-picture"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  className="hidden"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {formData.profilePicture ? 'Profile picture uploaded' : 'Upload your profile picture'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Recommended: Square image, max 5MB
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,12 +279,23 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Website/Portfolio (Optional)</label>
+              <label className="block text-sm font-medium mb-2">Current Website (Optional)</label>
               <Input
                 value={formData.website}
                 onChange={(e) => handleInputChange('website', e.target.value)}
-                placeholder="https://yourportfolio.com"
+                placeholder="https://yourcurrentwebsite.com"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Your SnapEvent portfolio link will be created automatically after approval
+              </p>
+              {formData.firstName && formData.lastName && (
+                <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                  <p className="text-muted-foreground">Your portfolio URL will be:</p>
+                  <p className="font-mono text-primary">
+                    snapevent.com/photographer/{formData.firstName.toLowerCase()}-{formData.lastName.toLowerCase()}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         );
@@ -364,13 +429,17 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
               <p className="text-muted-foreground">Please review your information before submitting</p>
             </div>
 
-            <div className="bg-muted/20 rounded-lg p-6 space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Personal Information</h3>
-                <p className="text-sm text-muted-foreground">
-                  {formData.firstName} {formData.lastName} • {formData.email} • {formData.location}
-                </p>
-              </div>
+              <div className="bg-muted/20 rounded-lg p-6 space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Contact Information</h3>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Name:</strong> {formData.firstName} {formData.lastName}</p>
+                    <p><strong>Email:</strong> {formData.email}</p>
+                    <p><strong>Phone:</strong> {formData.phone}</p>
+                    <p><strong>Location:</strong> {formData.location}</p>
+                    <p><strong>Profile Picture:</strong> {formData.profilePicture ? 'Uploaded' : 'Not provided'}</p>
+                  </div>
+                </div>
 
               <div>
                 <h3 className="font-semibold mb-2">Experience & Specialties</h3>
@@ -379,20 +448,35 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
                 </p>
               </div>
 
-              <div>
-                <h3 className="font-semibold mb-2">Services & Pricing</h3>
-                <p className="text-sm text-muted-foreground">
-                  Starting from {formData.priceRange} • {formData.availability}
-                </p>
+                <div>
+                  <h3 className="font-semibold mb-2">Services & Pricing</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Starting from {formData.priceRange} • {formData.availability}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Portfolio Information</h3>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Your SnapEvent Portfolio:</strong></p>
+                    <p className="font-mono text-primary bg-muted/50 p-2 rounded">
+                      snapevent.com/photographer/{formData.firstName.toLowerCase()}-{formData.lastName.toLowerCase()}
+                    </p>
+                    {formData.website && (
+                      <p><strong>Current Website:</strong> {formData.website}</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Next Steps</h4>
               <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                 <li>• We'll review your application within 2-3 business days</li>
                 <li>• You'll receive an email confirmation once approved</li>
-                <li>• Start receiving client inquiries within 24 hours of approval</li>
+                <li>• Your SnapEvent portfolio link will be created automatically</li>
+                <li>• Your profile will go live on SnapEvent</li>
+                <li>• Start receiving booking requests from clients</li>
               </ul>
             </div>
           </motion.div>

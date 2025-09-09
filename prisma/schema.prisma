@@ -1,0 +1,463 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==============================================
+// CORE USER MANAGEMENT
+// ==============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  phone     String?
+  avatar    String?
+  role      UserRole @default(CLIENT)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  photographerProfile PhotographerProfile?
+  bookings           Booking[]
+  reviews            Review[]
+  messages           Message[] @relation("MessageSender")
+  receivedMessages   Message[] @relation("MessageReceiver")
+  notifications      Notification[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CLIENT
+  PHOTOGRAPHER
+  ADMIN
+}
+
+// ==============================================
+// PHOTOGRAPHER PROFILES
+// ==============================================
+
+model PhotographerProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  businessName      String?
+  title             String?  // e.g., "Wedding & Portrait Photographer"
+  bio               String?
+  location          String
+  website           String?  // Current/existing website (optional)
+  portfolioUrl      String?  // Generated SnapEvent portfolio URL
+  instagramHandle   String?
+  
+  // Professional Details
+  yearsExperience   Int      @default(0)
+  isVerified        Boolean  @default(false)
+  isAvailable       Boolean  @default(true)
+  responseTime      String?  // e.g., "< 2 hours"
+  
+  // Stats
+  totalClients      Int      @default(0)
+  averageRating     Float    @default(0)
+  totalReviews      Int      @default(0)
+  
+  // Profile Images
+  profileImage      String?
+  coverImage        String?
+  
+  // Application Status
+  applicationStatus ApplicationStatus @default(PENDING)
+  applicationDate   DateTime @default(now())
+  approvedAt        DateTime?
+  approvedBy        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  specialties       PhotographerSpecialty[]
+  services          Service[]
+  portfolio         PortfolioItem[]
+  awards            Award[]
+  testimonials      Testimonial[]
+  bookings          Booking[]
+  reviews           Review[]
+  availability      Availability[]
+
+  @@map("photographer_profiles")
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+// ==============================================
+// SPECIALTIES & SERVICES
+// ==============================================
+
+model Specialty {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  icon        String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  photographers PhotographerSpecialty[]
+
+  @@map("specialties")
+}
+
+model PhotographerSpecialty {
+  id              String @id @default(cuid())
+  photographerId  String
+  specialtyId     String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  specialty       Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@unique([photographerId, specialtyId])
+  @@map("photographer_specialties")
+}
+
+model Service {
+  id              String @id @default(cuid())
+  photographerId  String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  name            String
+  description     String
+  price           Decimal @db.Decimal(10, 2)
+  duration        String? // e.g., "2 hours", "Full day"
+  deliverables    String? // e.g., "50 edited photos", "Online gallery"
+  isActive        Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  bookings        Booking[]
+
+  @@map("services")
+}
+
+// ==============================================
+// PORTFOLIO & MEDIA
+// ==============================================
+
+model PortfolioItem {
+  id              String @id @default(cuid())
+  photographerId  String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?
+  imageUrl        String
+  category        PortfolioCategory
+  tags            String[] // Array of tags for filtering
+  isFeatured      Boolean @default(false)
+  isActive        Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("portfolio_items")
+}
+
+enum PortfolioCategory {
+  WEDDING
+  PORTRAIT
+  CORPORATE
+  EVENT
+  FASHION
+  LANDSCAPE
+  STREET
+  PRODUCT
+  FOOD
+  OTHER
+}
+
+// ==============================================
+// AWARDS & TESTIMONIALS
+// ==============================================
+
+model Award {
+  id              String @id @default(cuid())
+  photographerId  String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  title           String
+  organization    String?
+  year            Int
+  description     String?
+  imageUrl        String?
+  createdAt       DateTime @default(now())
+
+  @@map("awards")
+}
+
+model Testimonial {
+  id              String @id @default(cuid())
+  photographerId  String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  clientName      String
+  clientEmail     String?
+  eventType       String? // e.g., "Wedding", "Corporate Event"
+  rating          Int     @db.SmallInt // 1-5 stars
+  comment         String
+  isApproved      Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+// ==============================================
+// BOOKINGS & SCHEDULING
+// ==============================================
+
+model Booking {
+  id              String @id @default(cuid())
+  clientId        String
+  photographerId  String
+  serviceId       String?
+  
+  client          User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  service         Service? @relation(fields: [serviceId], references: [id])
+  
+  // Booking Details
+  eventType       String
+  eventDate       DateTime
+  eventLocation   String
+  duration        String? // e.g., "4 hours", "Full day"
+  guestCount      Int?
+  specialRequests String?
+  
+  // Pricing
+  totalAmount     Decimal @db.Decimal(10, 2)
+  depositAmount   Decimal @db.Decimal(10, 2)
+  isDepositPaid   Boolean @default(false)
+  isFullyPaid     Boolean @default(false)
+  
+  // Status
+  status          BookingStatus @default(PENDING)
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  payments        Payment[]
+  messages        Message[]
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+model Availability {
+  id              String @id @default(cuid())
+  photographerId  String
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  date            DateTime @db.Date
+  startTime       String   // e.g., "09:00"
+  endTime         String   // e.g., "17:00"
+  isAvailable     Boolean  @default(true)
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([photographerId, date])
+  @@map("availability")
+}
+
+// ==============================================
+// PAYMENTS
+// ==============================================
+
+model Payment {
+  id              String @id @default(cuid())
+  bookingId       String
+  booking         Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  amount          Decimal @db.Decimal(10, 2)
+  currency        String  @default("USD")
+  paymentMethod   PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?
+  stripePaymentId String?
+  
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  PAYPAL
+  STRIPE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ==============================================
+// REVIEWS & RATINGS
+// ==============================================
+
+model Review {
+  id              String @id @default(cuid())
+  clientId        String
+  photographerId  String
+  
+  client          User @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  photographer    PhotographerProfile @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  
+  bookingId       String? // Optional link to specific booking
+  rating          Int     @db.SmallInt // 1-5 stars
+  title           String?
+  comment         String
+  isApproved      Boolean @default(false)
+  isPublic        Boolean @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([clientId, photographerId, bookingId])
+  @@map("reviews")
+}
+
+// ==============================================
+// MESSAGING SYSTEM
+// ==============================================
+
+model Message {
+  id              String @id @default(cuid())
+  senderId        String
+  receiverId      String
+  bookingId       String?
+  
+  sender          User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  booking         Booking? @relation(fields: [bookingId], references: [id])
+  
+  content         String
+  messageType     MessageType @default(TEXT)
+  isRead          Boolean @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime @default(now())
+
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+// ==============================================
+// SEARCH & FILTERING
+// ==============================================
+
+model SearchQuery {
+  id              String @id @default(cuid())
+  userId          String? // Optional - track user searches
+  
+  query           String
+  location        String?
+  category        PortfolioCategory?
+  priceMin        Decimal? @db.Decimal(10, 2)
+  priceMax        Decimal? @db.Decimal(10, 2)
+  rating          Float?
+  availability    DateTime?
+  
+  resultsCount    Int @default(0)
+  createdAt       DateTime @default(now())
+
+  @@map("search_queries")
+}
+
+// ==============================================
+// SYSTEM & ANALYTICS
+// ==============================================
+
+model Analytics {
+  id              String @id @default(cuid())
+  date            DateTime @db.Date
+  metric          String // e.g., "page_views", "searches", "bookings"
+  value           Int
+  metadata        Json? // Additional data as JSON
+  
+  createdAt       DateTime @default(now())
+
+  @@unique([date, metric])
+  @@map("analytics")
+}
+
+model Notification {
+  id              String @id @default(cuid())
+  userId          String
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  message         String
+  type            NotificationType
+  isRead          Boolean @default(false)
+  readAt          DateTime?
+  actionUrl       String?
+  
+  createdAt       DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  MESSAGE_RECEIVED
+  REVIEW_RECEIVED
+  SYSTEM_UPDATE
+}
+
+// ==============================================
+// ADDITIONAL RELATIONS
+// ==============================================
+
+// Note: All relations are already defined in the models above
