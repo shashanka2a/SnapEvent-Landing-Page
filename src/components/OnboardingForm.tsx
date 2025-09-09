@@ -8,14 +8,16 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Progress } from './ui/progress';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingFormProps {
-  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio') => void;
+  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
+  isEditMode?: boolean;
 }
 
-export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
+export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Personal Info
     firstName: '',
@@ -107,11 +109,32 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     // Here you would typically submit to backend
-    console.log('Form submitted:', formData);
-    // Navigate to a success page or portfolio
-    onNavigate('landing');
+    console.log(isEditMode ? 'Profile updated:' : 'Profile created instantly:', formData);
+    // Show success message and navigate to portfolio
+    alert(isEditMode ? 'Profile updated successfully!' : 'Profile created successfully! Your portfolio is now live.');
+    // Navigate to portfolio page to show the created/updated profile
+    onNavigate('portfolio', '1'); // Using photographer ID '1' for demo
+    
+    setIsSubmitting(false);
+  };
+
+  const stepVariants = {
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 }
+  };
+
+  const stepTransition = {
+    type: "tween" as const,
+    ease: "easeInOut" as const,
+    duration: 0.2
   };
 
   const renderStepContent = () => {
@@ -119,9 +142,12 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
       case 1:
         return (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            key="step-1"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={stepVariants}
+            transition={stepTransition}
             className="space-y-6"
           >
             <div className="text-center mb-8">
@@ -223,9 +249,12 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
       case 2:
         return (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            key="step-2"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={stepVariants}
+            transition={stepTransition}
             className="space-y-6"
           >
             <div className="text-center mb-8">
@@ -254,16 +283,21 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
               <p className="text-sm text-muted-foreground mb-3">Select all that apply</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {specialtyOptions.map((specialty) => (
-                  <div key={specialty} className="flex items-center space-x-2">
+                  <motion.div
+                    key={specialty}
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 transition-colors duration-200"
+                  >
                     <Checkbox
                       id={specialty}
                       checked={formData.specialties.includes(specialty)}
                       onCheckedChange={() => handleSpecialtyToggle(specialty)}
                     />
-                    <label htmlFor={specialty} className="text-sm cursor-pointer">
+                    <label htmlFor={specialty} className="text-sm cursor-pointer flex-1">
                       {specialty}
                     </label>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -286,7 +320,7 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
                 placeholder="https://yourcurrentwebsite.com"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Your SnapEvent portfolio link will be created automatically after approval
+                Your SnapEvent portfolio link will be created instantly upon registration
               </p>
               {formData.firstName && formData.lastName && (
                 <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
@@ -303,9 +337,12 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
       case 3:
         return (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            key="step-3"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={stepVariants}
+            transition={stepTransition}
             className="space-y-6"
           >
             <div className="text-center mb-8">
@@ -319,16 +356,21 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
               <p className="text-sm text-muted-foreground mb-3">Select all that apply</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {serviceOptions.map((service) => (
-                  <div key={service} className="flex items-center space-x-2">
+                  <motion.div
+                    key={service}
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-muted/50 transition-colors duration-200"
+                  >
                     <Checkbox
                       id={service}
                       checked={formData.services.includes(service)}
                       onCheckedChange={() => handleServiceToggle(service)}
                     />
-                    <label htmlFor={service} className="text-sm cursor-pointer">
+                    <label htmlFor={service} className="text-sm cursor-pointer flex-1">
                       {service}
                     </label>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -368,9 +410,12 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
       case 4:
         return (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            key="step-4"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={stepVariants}
+            transition={stepTransition}
             className="space-y-6"
           >
             <div className="text-center mb-8">
@@ -418,9 +463,12 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
       case 5:
         return (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            key="step-5"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={stepVariants}
+            transition={stepTransition}
             className="space-y-6"
           >
             <div className="text-center mb-8">
@@ -469,14 +517,14 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
                 </div>
               </div>
 
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Next Steps</h4>
-              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                <li>• We'll review your application within 2-3 business days</li>
-                <li>• You'll receive an email confirmation once approved</li>
-                <li>• Your SnapEvent portfolio link will be created automatically</li>
-                <li>• Your profile will go live on SnapEvent</li>
-                <li>• Start receiving booking requests from clients</li>
+            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Instant Registration</h4>
+              <ul className="text-sm text-green-800 dark:text-green-200 space-y-1">
+                <li>• Your profile will be created instantly upon submission</li>
+                <li>• Your SnapEvent portfolio link will be available immediately</li>
+                <li>• Your profile will go live on SnapEvent right away</li>
+                <li>• Start receiving booking requests from clients instantly</li>
+                <li>• Welcome to the SnapEvent community!</li>
               </ul>
             </div>
           </motion.div>
@@ -516,43 +564,82 @@ export function OnboardingForm({ onNavigate }: OnboardingFormProps) {
             <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
             <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="h-2 bg-primary rounded-full"
+          />
         </div>
       </div>
 
       {/* Form Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
-          {renderStepContent()}
+          <AnimatePresence mode="wait">
+            {renderStepContent()}
+          </AnimatePresence>
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-12">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex items-center space-x-2"
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Previous</span>
-            </Button>
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Previous</span>
+              </Button>
+            </motion.div>
 
             {currentStep === totalSteps ? (
-              <Button
-                onClick={handleSubmit}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2"
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <span>Submit Application</span>
-                <CheckCircle className="h-4 w-4" />
-              </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full"
+                      />
+                      <span>Creating Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{isEditMode ? 'Update Profile' : 'Create Profile Instantly'}</span>
+                      <CheckCircle className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
             ) : (
-              <Button
-                onClick={nextStep}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2"
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <span>Next</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+                <Button
+                  onClick={nextStep}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg"
+                >
+                  <span>Next</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </motion.div>
             )}
           </div>
         </div>

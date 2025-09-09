@@ -77,10 +77,10 @@ model PhotographerProfile {
   coverImage        String?
   
   // Application Status
-  applicationStatus ApplicationStatus @default(PENDING)
+  applicationStatus ApplicationStatus @default(APPROVED)
   applicationDate   DateTime @default(now())
-  approvedAt        DateTime?
-  approvedBy        String?
+  approvedAt        DateTime @default(now())
+  approvedBy        String? @default("SYSTEM")
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

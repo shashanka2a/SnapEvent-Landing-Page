@@ -10,7 +10,7 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface LandingPageProps {
-  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio') => void;
+  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
   onPhotographerSelect: (id: string) => void;
 }
 

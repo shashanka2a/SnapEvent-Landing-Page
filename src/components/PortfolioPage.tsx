@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, MapPin, Calendar, Camera, Phone, Mail, Instagram, Globe, Award, Users, Clock, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -12,12 +13,58 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface PortfolioPageProps {
   photographerId: string;
-  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio') => void;
+  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
 }
 
 export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const SkeletonCard = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-muted/50 rounded-lg p-6 space-y-4"
+    >
+      <div className="flex items-center space-x-4">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="w-16 h-16 bg-muted rounded-full"
+        />
+        <div className="space-y-2 flex-1">
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+            className="h-4 bg-muted rounded w-3/4"
+          />
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+            className="h-3 bg-muted rounded w-1/2"
+          />
+        </div>
+      </div>
+      <motion.div
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+        className="h-3 bg-muted rounded w-full"
+      />
+      <motion.div
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+        className="h-3 bg-muted rounded w-2/3"
+      />
+    </motion.div>
+  );
 
   // Mock photographer data - in real app this would come from props or API
   const photographer = {
@@ -207,16 +254,43 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    size="lg"
-                    onClick={() => setShowContactForm(true)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    Contact Photographer
-                  </Button>
-                  <Button size="lg" variant="outline">
-                    View Availability
-                  </Button>
+                    <Button 
+                      size="lg"
+                      onClick={() => setShowContactForm(true)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:shadow-lg"
+                    >
+                      Contact Photographer
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button size="lg" variant="outline" className="transition-all duration-200 hover:shadow-md">
+                      View Availability
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button 
+                      size="lg"
+                      variant="outline"
+                      onClick={() => onNavigate('onboarding')}
+                      className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950/20 transition-all duration-200 hover:shadow-md"
+                    >
+                      <Camera className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
 
@@ -249,9 +323,92 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
         </div>
       </section>
 
+      {/* Success Banner */}
+      <AnimatePresence>
+        {showSuccessBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.95 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              duration: 0.4 
+            }}
+            className="bg-green-50 dark:bg-green-950/20 border-b border-green-200 dark:border-green-800"
+          >
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <motion.div 
+                  className="flex items-center space-x-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ 
+                      type: "spring", 
+                      stiffness: 500, 
+                      damping: 15,
+                      delay: 0.1 
+                    }}
+                  >
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </motion.div>
+                  <div>
+                    <motion.p 
+                      className="text-sm font-medium text-green-800 dark:text-green-200"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.3 }}
+                    >
+                      Profile created successfully!
+                    </motion.p>
+                    <motion.p 
+                      className="text-xs text-green-600 dark:text-green-400"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.3 }}
+                    >
+                      Your portfolio is now live and ready to receive bookings.
+                    </motion.p>
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.2 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSuccessBanner(false)}
+                    className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200 transition-colors duration-200"
+                  >
+                    ✕
+                  </Button>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12">
-        <Tabs defaultValue="portfolio" className="space-y-8">
+        {isLoading ? (
+          <div className="space-y-8">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : (
+          <Tabs defaultValue="portfolio" className="space-y-8">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-4">
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
@@ -411,6 +568,7 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
             </div>
           </TabsContent>
         </Tabs>
+        )}
       </div>
 
       {/* Contact Form Modal */}

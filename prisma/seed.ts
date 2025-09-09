@@ -127,7 +127,7 @@ async function main() {
           totalReviews: 127,
           profileImage: 'https://images.unsplash.com/photo-1643968612613-fd411aecd1fd?w=400',
           applicationStatus: ApplicationStatus.APPROVED,
-          approvedAt: new Date('2023-01-15')
+          approvedAt: new Date()
         }
       }
     }
@@ -158,7 +158,7 @@ async function main() {
           totalReviews: 89,
           profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
           applicationStatus: ApplicationStatus.APPROVED,
-          approvedAt: new Date('2022-11-20')
+          approvedAt: new Date()
         }
       }
     }
@@ -189,7 +189,7 @@ async function main() {
           totalReviews: 76,
           profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400',
           applicationStatus: ApplicationStatus.APPROVED,
-          approvedAt: new Date('2023-03-10')
+          approvedAt: new Date()
         }
       }
     }
