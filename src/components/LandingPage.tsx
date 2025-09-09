@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Users, Camera, Star, ArrowRight, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -16,6 +17,45 @@ interface LandingPageProps {
 
 export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Animation variants
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" as const }
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const staggerItem = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: "easeOut" as const }
+  };
+
+  const scaleOnHover = {
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 },
+    transition: { type: "spring" as const, stiffness: 400, damping: 17 }
+  };
+
+  const slideInFromLeft = {
+    initial: { opacity: 0, x: -30 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.5, ease: "easeOut" as const }
+  };
+
+  const slideInFromRight = {
+    initial: { opacity: 0, x: 30 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.5, ease: "easeOut" as const }
+  };
 
   const categories = [
     {
@@ -79,275 +119,623 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <motion.nav 
+        className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Camera className="h-8 w-8 text-primary" />
+            <motion.div 
+              className="flex items-center space-x-2"
+              {...slideInFromLeft}
+            >
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+              >
+                <Camera className="h-8 w-8 text-primary" />
+              </motion.div>
               <span className="text-xl font-semibold">SnapEvent</span>
-            </div>
+            </motion.div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Find Photographers</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <Button variant="ghost" size="sm">Sign In</Button>
-              <Button 
-                size="sm" 
-                onClick={() => onNavigate('onboarding')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Join as Photographer
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <motion.div 
+              className="hidden md:flex items-center space-x-8"
+              {...slideInFromRight}
             >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-border pt-4">
-              <div className="flex flex-col space-y-3">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Find Photographers</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-                <Button variant="ghost" size="sm" className="justify-start">Sign In</Button>
+              <motion.a 
+                href="#" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+              >
+                Find Photographers
+              </motion.a>
+              <motion.a 
+                href="#" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+              >
+                How it Works
+              </motion.a>
+              <motion.a 
+                href="#" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+              >
+                Pricing
+              </motion.a>
+              <motion.div {...scaleOnHover}>
+                <Button variant="ghost" size="sm">Sign In</Button>
+              </motion.div>
+              <motion.div {...scaleOnHover}>
                 <Button 
                   size="sm" 
                   onClick={() => onNavigate('onboarding')}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   Join as Photographer
                 </Button>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            </motion.div>
+
+            {/* Mobile Menu Button */}
+            <motion.div 
+              className="md:hidden"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                <AnimatePresence mode="wait">
+                  {isMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="h-5 w-5" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="h-5 w-5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* Mobile Navigation */}
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div 
+                className="md:hidden mt-4 pb-4 border-t border-border pt-4"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                <motion.div 
+                  className="flex flex-col space-y-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                >
+                  <motion.a 
+                    href="#" 
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                  >
+                    Find Photographers
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                  >
+                    How it Works
+                  </motion.a>
+                  <motion.a 
+                    href="#" 
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                  >
+                    Pricing
+                  </motion.a>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button variant="ghost" size="sm" className="justify-start">Sign In</Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button 
+                      size="sm" 
+                      onClick={() => onNavigate('onboarding')}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
+                    >
+                      Join as Photographer
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <section className="py-16 md:py-24 px-4">
         <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          <motion.h1 
+            className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
+            {...fadeInUp}
+          >
             Connect with
-            <span className="block text-primary">Professional Photographers</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <motion.span 
+              className="block text-primary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+            >
+              Professional Photographers
+            </motion.span>
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6, ease: "easeOut" }}
+          >
             Find the perfect photographer for your special moments. Browse portfolios, compare prices, and book with confidence.
-          </p>
+          </motion.p>
 
           {/* Search Form */}
-          <div className="bg-card border border-border rounded-xl p-6 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input 
-                  placeholder="Photography type" 
-                  className="pl-10 bg-input-background border-0"
-                />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input 
-                  placeholder="Location" 
-                  className="pl-10 bg-input-background border-0"
-                />
-              </div>
-              <Select>
-                <SelectTrigger className="bg-input-background border-0">
-                  <SelectValue placeholder="Event size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="small">Small (1-20 people)</SelectItem>
-                  <SelectItem value="medium">Medium (21-100 people)</SelectItem>
-                  <SelectItem value="large">Large (100+ people)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                Search Photographers
-              </Button>
-            </div>
-          </div>
+          <motion.div 
+            className="bg-card border border-border rounded-xl p-6 max-w-4xl mx-auto"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.7, duration: 0.6, ease: "easeOut" as const }}
+            whileHover={{ scale: 1.01 }}
+          >
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-4 gap-4"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              <motion.div className="relative" variants={staggerItem}>
+                <motion.div
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input 
+                    placeholder="Photography type" 
+                    className="pl-10 bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  />
+                </motion.div>
+              </motion.div>
+              <motion.div className="relative" variants={staggerItem}>
+                <motion.div
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input 
+                    placeholder="Location" 
+                    className="pl-10 bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  />
+                </motion.div>
+              </motion.div>
+              <motion.div variants={staggerItem}>
+                <motion.div
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  <Select>
+                    <SelectTrigger className="bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200">
+                      <SelectValue placeholder="Event size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small (1-20 people)</SelectItem>
+                      <SelectItem value="medium">Medium (21-100 people)</SelectItem>
+                      <SelectItem value="large">Large (100+ people)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              </motion.div>
+              <motion.div variants={staggerItem}>
+                <motion.div {...scaleOnHover}>
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                    Search Photographers
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Categories Section */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
-          <div className="flex items-center justify-between mb-8">
+          <motion.div 
+            className="flex items-center justify-between mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
             <h2 className="text-3xl font-bold">Browse by Category</h2>
-            <Button variant="ghost" className="text-primary hover:text-primary/80">
-              View All <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+            <motion.div {...scaleOnHover}>
+              <Button variant="ghost" className="text-primary hover:text-primary/80">
+                View All <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </motion.div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {categories.map((category, index) => (
-              <Card key={index} className="group cursor-pointer hover:shadow-lg transition-all duration-300 bg-card border-border">
-                <CardContent className="p-0">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <ImageWithFallback
-                      src={category.image}
-                      alt={category.name}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300" />
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h3 className="text-xl font-semibold mb-1">{category.name}</h3>
-                      <p className="text-sm opacity-90">{category.count}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <motion.div key={index} variants={staggerItem}>
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  <Card className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-card border-border overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="relative overflow-hidden">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                        >
+                          <ImageWithFallback
+                            src={category.image}
+                            alt={category.name}
+                            className="w-full h-48 object-cover"
+                          />
+                        </motion.div>
+                        <motion.div 
+                          className="absolute inset-0 bg-black/40"
+                          whileHover={{ backgroundColor: "rgba(0,0,0,0.2)" }}
+                          transition={{ duration: 0.3 }}
+                        />
+                        <motion.div 
+                          className="absolute bottom-4 left-4 text-white"
+                          initial={{ opacity: 0, y: 20 }}
+                          whileHover={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <h3 className="text-xl font-semibold mb-1">{category.name}</h3>
+                          <p className="text-sm opacity-90">{category.count}</p>
+                        </motion.div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Trending Photographers */}
       <section className="py-16 px-4 bg-muted/20">
         <div className="container mx-auto">
-          <div className="flex items-center justify-between mb-8">
+          <motion.div 
+            className="flex items-center justify-between mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
             <h2 className="text-3xl font-bold">Trending Photographers</h2>
-            <Button variant="ghost" className="text-primary hover:text-primary/80">
-              View All <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+            <motion.div {...scaleOnHover}>
+              <Button variant="ghost" className="text-primary hover:text-primary/80">
+                View All <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </motion.div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingPhotographers.map((photographer) => (
-              <Card 
-                key={photographer.id} 
-                className="group cursor-pointer hover:shadow-lg transition-all duration-300 bg-card border-border"
-                onClick={() => onPhotographerSelect(photographer.id)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="relative">
-                      <ImageWithFallback
-                        src={photographer.image}
-                        alt={photographer.name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                      {photographer.verified && (
-                        <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1">
-                          <Star className="h-3 w-3 text-primary-foreground fill-current" />
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {trendingPhotographers.map((photographer, index) => (
+              <motion.div key={photographer.id} variants={staggerItem}>
+                <motion.div
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  <Card 
+                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-card border-border"
+                    onClick={() => onPhotographerSelect(photographer.id)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <motion.div 
+                          className="relative"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                        >
+                          <ImageWithFallback
+                            src={photographer.image}
+                            alt={photographer.name}
+                            className="w-16 h-16 rounded-full object-cover"
+                          />
+                          {photographer.verified && (
+                            <motion.div 
+                              className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: index * 0.1 + 0.5, type: "spring" as const, stiffness: 500, damping: 15 }}
+                            >
+                              <Star className="h-3 w-3 text-primary-foreground fill-current" />
+                            </motion.div>
+                          )}
+                        </motion.div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-semibold truncate">{photographer.name}</h3>
+                            {photographer.verified && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.1 + 0.7, type: "spring" as const, stiffness: 500, damping: 15 }}
+                              >
+                                <Badge variant="secondary" className="text-xs">Verified</Badge>
+                              </motion.div>
+                            )}
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground mb-2">{photographer.specialty}</p>
+                          
+                          <div className="flex items-center space-x-1 mb-2">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{photographer.location}</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-1">
+                              <motion.div
+                                whileHover={{ rotate: 360 }}
+                                transition={{ duration: 0.6, ease: "easeInOut" }}
+                              >
+                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              </motion.div>
+                              <span className="text-sm font-medium">{photographer.rating}</span>
+                              <span className="text-xs text-muted-foreground">({photographer.reviews})</span>
+                            </div>
+                            <motion.span 
+                              className="text-sm font-medium text-primary"
+                              whileHover={{ scale: 1.1 }}
+                              transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                            >
+                              {photographer.price}
+                            </motion.span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold truncate">{photographer.name}</h3>
-                        {photographer.verified && (
-                          <Badge variant="secondary" className="text-xs">Verified</Badge>
-                        )}
                       </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-2">{photographer.specialty}</p>
-                      
-                      <div className="flex items-center space-x-1 mb-2">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{photographer.location}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{photographer.rating}</span>
-                          <span className="text-xs text-muted-foreground">({photographer.reviews})</span>
-                        </div>
-                        <span className="text-sm font-medium text-primary">{photographer.price}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-16 px-4">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <motion.h2 
+            className="text-3xl md:text-4xl font-bold mb-4"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
             Ready to capture your special moments?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
             Join thousands of satisfied clients who found their perfect photographer through SnapEvent.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Find Photographers
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => onNavigate('onboarding')}
-            >
-              Join as Photographer
-            </Button>
-          </div>
+          </motion.p>
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <motion.div {...scaleOnHover}>
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Find Photographers
+              </Button>
+            </motion.div>
+            <motion.div {...scaleOnHover}>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => onNavigate('onboarding')}
+              >
+                Join as Photographer
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 py-12 px-4">
+      <motion.footer 
+        className="border-t border-border bg-card/50 py-12 px-4"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true, margin: "-100px" }}
+      >
         <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Camera className="h-6 w-6 text-primary" />
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-4 gap-8"
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            <motion.div className="space-y-4" variants={staggerItem}>
+              <motion.div 
+                className="flex items-center space-x-2"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+              >
+                <motion.div
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                >
+                  <Camera className="h-6 w-6 text-primary" />
+                </motion.div>
                 <span className="text-lg font-semibold">SnapEvent</span>
-              </div>
+              </motion.div>
               <p className="text-sm text-muted-foreground">
                 Connecting clients with professional photographers worldwide.
               </p>
-            </div>
+            </motion.div>
             
-            <div className="space-y-4">
+            <motion.div className="space-y-4" variants={staggerItem}>
               <h4 className="font-semibold">For Clients</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <a href="#" className="block hover:text-foreground transition-colors">Find Photographers</a>
-                <a href="#" className="block hover:text-foreground transition-colors">How it Works</a>
-                <a href="#" className="block hover:text-foreground transition-colors">Pricing</a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Find Photographers
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  How it Works
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Pricing
+                </motion.a>
               </div>
-            </div>
+            </motion.div>
             
-            <div className="space-y-4">
+            <motion.div className="space-y-4" variants={staggerItem}>
               <h4 className="font-semibold">For Photographers</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <a href="#" className="block hover:text-foreground transition-colors">Join SnapEvent</a>
-                <a href="#" className="block hover:text-foreground transition-colors">Success Stories</a>
-                <a href="#" className="block hover:text-foreground transition-colors">Resources</a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Join SnapEvent
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Success Stories
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Resources
+                </motion.a>
               </div>
-            </div>
+            </motion.div>
             
-            <div className="space-y-4">
+            <motion.div className="space-y-4" variants={staggerItem}>
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <a href="#" className="block hover:text-foreground transition-colors">Help Center</a>
-                <a href="#" className="block hover:text-foreground transition-colors">Contact Us</a>
-                <a href="#" className="block hover:text-foreground transition-colors">Privacy Policy</a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Help Center
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Contact Us
+                </motion.a>
+                <motion.a 
+                  href="#" 
+                  className="block hover:text-foreground transition-colors"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                >
+                  Privacy Policy
+                </motion.a>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           
-          <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
+          <motion.div 
+            className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            viewport={{ once: true }}
+          >
             © 2025 SnapEvent. All rights reserved.
-          </div>
+          </motion.div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }
