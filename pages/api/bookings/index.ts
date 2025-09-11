@@ -92,12 +92,18 @@ async function createBooking(req: NextApiRequest, res: NextApiResponse) {
       serviceId,
       eventType,
       eventDate,
+      eventTime,
       eventLocation,
       duration,
       guestCount,
       specialRequests,
       totalAmount,
-      depositAmount
+      depositAmount,
+      clientName,
+      clientEmail,
+      clientPhone,
+      notes,
+      status = 'pending'
     } = req.body
 
     // Validate required fields
@@ -105,6 +111,28 @@ async function createBooking(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ 
         error: 'Missing required fields: clientId, photographerId, eventType, eventDate, eventLocation, totalAmount' 
       })
+    }
+
+    // Check for conflicts with confirmed bookings
+    if (eventTime) {
+      const { data: conflictingBookings, error: conflictError } = await supabase
+        .from('bookings')
+        .select('id, status')
+        .eq('photographer_id', photographerId)
+        .eq('event_date', eventDate)
+        .eq('event_time', eventTime)
+        .eq('status', 'confirmed');
+
+      if (conflictError) {
+        console.error('Error checking for conflicts:', conflictError);
+        return res.status(500).json({ error: 'Failed to check for booking conflicts' });
+      }
+
+      if (conflictingBookings && conflictingBookings.length > 0) {
+        return res.status(409).json({ 
+          error: 'This time slot is already booked' 
+        });
+      }
     }
 
     // Create booking
@@ -116,13 +144,18 @@ async function createBooking(req: NextApiRequest, res: NextApiResponse) {
         service_id: serviceId,
         event_type: eventType,
         event_date: eventDate,
+        event_time: eventTime,
         event_location: eventLocation,
         duration,
         guest_count: guestCount,
         special_requests: specialRequests,
         total_amount: totalAmount,
         deposit_amount: depositAmount || 0,
-        status: 'PENDING'
+        client_name: clientName,
+        client_email: clientEmail,
+        client_phone: clientPhone,
+        notes: notes,
+        status: status
       })
       .select(`
         *,

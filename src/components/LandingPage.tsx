@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, Users, Camera, Star, ArrowRight, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { photographersAPI, type Photographer } from '../lib/api';
 
 interface LandingPageProps {
   onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
@@ -17,6 +18,13 @@ interface LandingPageProps {
 
 export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [trendingPhotographers, setTrendingPhotographers] = useState<Photographer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchFilters, setSearchFilters] = useState({
+    specialty: '',
+    location: '',
+    eventSize: ''
+  });
 
   // Animation variants
   const fadeInUp = {
@@ -80,41 +88,64 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
     }
   ];
 
-  const trendingPhotographers = [
-    {
-      id: '1',
-      name: 'Sarah Chen',
-      specialty: 'Wedding & Portrait',
-      location: 'San Francisco, CA',
-      rating: 4.9,
-      reviews: 127,
-      price: 'From $800',
-      image: 'https://images.unsplash.com/photo-1643968612613-fd411aecd1fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwaG90b2dyYXBoZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NTczMjkzODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      verified: true
-    },
-    {
-      id: '2',
-      name: 'Marcus Johnson',
-      specialty: 'Corporate & Events',
-      location: 'New York, NY',
-      rating: 4.8,
-      reviews: 203,
-      price: 'From $650',
-      image: 'https://images.unsplash.com/photo-1502514463321-f81bd30cd473?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYW1lcmElMjBwaG90b2dyYXBoZXIlMjB3b3Jrc3BhY2V8ZW58MXx8fHwxNzU3NDE1NTM5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      verified: true
-    },
-    {
-      id: '3',
-      name: 'Elena Rodriguez',
-      specialty: 'Fashion & Portrait',
-      location: 'Los Angeles, CA',
-      rating: 4.9,
-      reviews: 156,
-      price: 'From $950',
-      image: 'https://images.unsplash.com/photo-1586796676778-2c50b6bc3937?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHBob3RvZ3JhcGhlciUyMHN0dWRpb3xlbnwxfHx8fDE3NTc0MTU1Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-      verified: true
+  // Fetch photographers on component mount
+  useEffect(() => {
+    const fetchPhotographers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await photographersAPI.getAll({ limit: 6 });
+        setTrendingPhotographers(response.photographers || []);
+      } catch (error) {
+        console.error('Failed to fetch photographers:', error);
+        // Fallback to mock data if API fails
+        setTrendingPhotographers([
+          {
+            id: '1',
+            businessName: 'Sarah Chen Photography',
+            title: 'Wedding & Portrait Photographer',
+            location: 'San Francisco, CA',
+            bio: 'Passionate photographer specializing in capturing authentic moments and emotions.',
+            specialties: ['Wedding Photography', 'Portrait Photography'],
+            services: [
+              {
+                name: 'Wedding Photography',
+                description: 'Full day coverage with 2 photographers',
+                price: 'From $2,800',
+                duration: '8-10 hours',
+                deliverables: '500+ edited photos, online gallery, print release'
+              }
+            ],
+            portfolio: [],
+            rating: 4.9,
+            reviews: 127,
+            verified: true,
+            image: 'https://images.unsplash.com/photo-1643968612613-fd411aecd1fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwaG90b2dyYXBoZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NTczMjkzODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral'
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPhotographers();
+  }, []);
+
+  // Handle search
+  const handleSearch = async () => {
+    try {
+      setIsLoading(true);
+      const response = await photographersAPI.getAll({
+        specialty: searchFilters.specialty,
+        location: searchFilters.location,
+        limit: 6
+      });
+      setTrendingPhotographers(response.photographers || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -328,6 +359,8 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input 
                     placeholder="Photography type" 
+                    value={searchFilters.specialty}
+                    onChange={(e) => setSearchFilters(prev => ({ ...prev, specialty: e.target.value }))}
                     className="pl-10 bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                 </motion.div>
@@ -340,6 +373,8 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input 
                     placeholder="Location" 
+                    value={searchFilters.location}
+                    onChange={(e) => setSearchFilters(prev => ({ ...prev, location: e.target.value }))}
                     className="pl-10 bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                 </motion.div>
@@ -349,7 +384,7 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
                   whileFocus={{ scale: 1.02 }}
                   transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                 >
-                  <Select>
+                  <Select value={searchFilters.eventSize} onValueChange={(value) => setSearchFilters(prev => ({ ...prev, eventSize: value }))}>
                     <SelectTrigger className="bg-input-background border-0 focus:ring-2 focus:ring-primary/20 transition-all duration-200">
                       <SelectValue placeholder="Event size" />
                     </SelectTrigger>
@@ -363,8 +398,12 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
               </motion.div>
               <motion.div variants={staggerItem}>
                 <motion.div {...scaleOnHover}>
-                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    Search Photographers
+                  <Button 
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {isLoading ? 'Searching...' : 'Search Photographers'}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -467,88 +506,108 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
             whileInView="animate"
             viewport={{ once: true, margin: "-50px" }}
           >
-            {trendingPhotographers.map((photographer, index) => (
-              <motion.div key={photographer.id} variants={staggerItem}>
-                <motion.div
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-                >
-                  <Card 
-                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-card border-border"
-                    onClick={() => onPhotographerSelect(photographer.id)}
-                  >
+            {isLoading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <motion.div key={index} variants={staggerItem}>
+                  <Card className="bg-card border-border">
                     <CardContent className="p-6">
                       <div className="flex items-start space-x-4">
-                        <motion.div 
-                          className="relative"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-                        >
-                          <ImageWithFallback
-                            src={photographer.image}
-                            alt={photographer.name}
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
-                          {photographer.verified && (
-                            <motion.div 
-                              className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ delay: index * 0.1 + 0.5, type: "spring" as const, stiffness: 500, damping: 15 }}
-                            >
-                              <Star className="h-3 w-3 text-primary-foreground fill-current" />
-                            </motion.div>
-                          )}
-                        </motion.div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold truncate">{photographer.name}</h3>
-                            {photographer.verified && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: index * 0.1 + 0.7, type: "spring" as const, stiffness: 500, damping: 15 }}
-                              >
-                                <Badge variant="secondary" className="text-xs">Verified</Badge>
-                              </motion.div>
-                            )}
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-2">{photographer.specialty}</p>
-                          
-                          <div className="flex items-center space-x-1 mb-2">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">{photographer.location}</span>
-                          </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-1">
-                              <motion.div
-                                whileHover={{ rotate: 360 }}
-                                transition={{ duration: 0.6, ease: "easeInOut" }}
-                              >
-                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                              </motion.div>
-                              <span className="text-sm font-medium">{photographer.rating}</span>
-                              <span className="text-xs text-muted-foreground">({photographer.reviews})</span>
-                            </div>
-                            <motion.span 
-                              className="text-sm font-medium text-primary"
-                              whileHover={{ scale: 1.1 }}
-                              transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-                            >
-                              {photographer.price}
-                            </motion.span>
-                          </div>
+                        <div className="w-16 h-16 bg-muted rounded-full animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded animate-pulse" />
+                          <div className="h-3 bg-muted rounded w-3/4 animate-pulse" />
+                          <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              </motion.div>
-            ))}
+              ))
+            ) : (
+              trendingPhotographers.map((photographer, index) => (
+                <motion.div key={photographer.id} variants={staggerItem}>
+                  <motion.div
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                  >
+                    <Card 
+                      className="group cursor-pointer hover:shadow-xl transition-all duration-300 bg-card border-border"
+                      onClick={() => onPhotographerSelect(photographer.id)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          <motion.div 
+                            className="relative"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                          >
+                            <ImageWithFallback
+                              src={photographer.image}
+                              alt={photographer.businessName}
+                              className="w-16 h-16 rounded-full object-cover"
+                            />
+                            {photographer.verified && (
+                              <motion.div 
+                                className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: index * 0.1 + 0.5, type: "spring" as const, stiffness: 500, damping: 15 }}
+                              >
+                                <Star className="h-3 w-3 text-primary-foreground fill-current" />
+                              </motion.div>
+                            )}
+                          </motion.div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-semibold truncate">{photographer.businessName}</h3>
+                              {photographer.verified && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: index * 0.1 + 0.7, type: "spring" as const, stiffness: 500, damping: 15 }}
+                                >
+                                  <Badge variant="secondary" className="text-xs">Verified</Badge>
+                                </motion.div>
+                              )}
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground mb-2">{photographer.title}</p>
+                            
+                            <div className="flex items-center space-x-1 mb-2">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">{photographer.location}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-1">
+                                <motion.div
+                                  whileHover={{ rotate: 360 }}
+                                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                                >
+                                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                </motion.div>
+                                <span className="text-sm font-medium">{photographer.rating}</span>
+                                <span className="text-xs text-muted-foreground">({photographer.reviews})</span>
+                              </div>
+                              <motion.span 
+                                className="text-sm font-medium text-primary"
+                                whileHover={{ scale: 1.1 }}
+                                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+                              >
+                                {photographer.services[0]?.price || 'Contact for pricing'}
+                              </motion.span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </motion.div>
+              ))
+            )}
           </motion.div>
         </div>
       </section>

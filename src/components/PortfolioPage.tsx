@@ -10,6 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { photographersAPI, type Photographer } from '../lib/api';
+import { BookingCalendar } from './BookingCalendar';
+import { AvailabilityManager } from './AvailabilityManager';
+import { BookingManager } from './BookingManager';
 
 interface PortfolioPageProps {
   photographerId: string;
@@ -19,14 +23,87 @@ interface PortfolioPageProps {
 export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
+  const [showAvailabilityManager, setShowAvailabilityManager] = useState(false);
+  const [showBookingManager, setShowBookingManager] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [photographer, setPhotographer] = useState<Photographer | null>(null);
 
-  // Simulate loading
+  // Booking submission handler
+  const handleBookingSubmit = async (bookingData: any) => {
+    try {
+      // Here you would call your booking API
+      console.log('Booking submitted:', bookingData);
+      
+      // For now, we'll just show a success message
+      alert(`Booking submitted successfully! We'll contact you soon to confirm your ${bookingData.eventType} on ${bookingData.eventDate} at ${bookingData.eventTime}.`);
+      
+      // Close the booking calendar
+      setShowBookingCalendar(false);
+      
+      // You could also send an email notification here
+      // await sendBookingNotification(bookingData);
+      
+    } catch (error) {
+      console.error('Failed to submit booking:', error);
+      alert('Failed to submit booking. Please try again.');
+    }
+  };
+
+  // Fetch photographer data
   React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchPhotographer = async () => {
+      try {
+        setIsLoading(true);
+        const response = await photographersAPI.getById(photographerId);
+        setPhotographer(response);
+      } catch (error) {
+        console.error('Failed to fetch photographer:', error);
+        // Fallback to mock data if API fails
+        setPhotographer({
+          id: photographerId,
+          businessName: 'Sarah Chen Photography',
+          title: 'Wedding & Portrait Photographer',
+          location: 'San Francisco, CA',
+          bio: 'Passionate photographer specializing in capturing authentic moments and emotions. With over 8 years of experience, I focus on creating timeless images that tell your unique story.',
+          specialties: ['Wedding Photography', 'Portrait Photography', 'Engagement Sessions'],
+          services: [
+            {
+              name: 'Wedding Photography',
+              description: 'Full day coverage with 2 photographers',
+              price: 'From $2,800',
+              duration: '8-10 hours',
+              deliverables: '500+ edited photos, online gallery, print release'
+            },
+            {
+              name: 'Portrait Session',
+              description: 'Individual, couple, or family portraits',
+              price: 'From $450',
+              duration: '1-2 hours',
+              deliverables: '30-50 edited photos, online gallery'
+            }
+          ],
+          portfolio: [
+            {
+              id: 1,
+              image: 'https://images.unsplash.com/photo-1730116309939-10a01fdf1edb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWRkaW5nJTIwcGhvdG9ncmFwaHklMjBjb3VwbGV8ZW58MXx8fHwxNzU3Mzk0MjE1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+              category: 'wedding',
+              title: 'Golden Hour Wedding'
+            }
+          ],
+          rating: 4.9,
+          reviews: 127,
+          verified: true,
+          image: 'https://images.unsplash.com/photo-1643968612613-fd411aecd1fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwaG90b2dyYXBoZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NTczMjkzODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPhotographer();
+  }, [photographerId]);
 
   const SkeletonCard = () => (
     <motion.div
@@ -66,108 +143,17 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
     </motion.div>
   );
 
-  // Mock photographer data - in real app this would come from props or API
-  const photographer = {
-    id: photographerId,
-    name: 'Sarah Chen',
-    title: 'Wedding & Portrait Photographer',
-    location: 'San Francisco, CA',
-    rating: 4.9,
-    reviews: 127,
-    yearsExperience: 8,
-    totalClients: 450,
-    responseTime: '< 2 hours',
-    bio: 'Passionate photographer specializing in capturing authentic moments and emotions. With over 8 years of experience, I focus on creating timeless images that tell your unique story. My approach combines photojournalistic style with artistic vision to deliver stunning results.',
-    image: 'https://images.unsplash.com/photo-1643968612613-fd411aecd1fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwaG90b2dyYXBoZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NTczMjkzODF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    verified: true,
-    website: 'sarahchen.photography',
-    instagram: '@sarahchenphoto',
-    email: 'hello@sarahchen.photography',
-    phone: '+1 (415) 555-0123',
-    specialties: ['Wedding Photography', 'Portrait Photography', 'Engagement Sessions'],
-    awards: ['Best Wedding Photographer 2023', 'Portrait Masters Gold Award'],
-    services: [
-      {
-        name: 'Wedding Photography',
-        description: 'Full day coverage with 2 photographers',
-        price: 'From $2,800',
-        duration: '8-10 hours',
-        deliverables: '500+ edited photos, online gallery, print release'
-      },
-      {
-        name: 'Portrait Session',
-        description: 'Individual, couple, or family portraits',
-        price: 'From $450',
-        duration: '1-2 hours',
-        deliverables: '30-50 edited photos, online gallery'
-      },
-      {
-        name: 'Engagement Session',
-        description: 'Romantic couple photography session',
-        price: 'From $650',
-        duration: '1.5 hours',
-        deliverables: '40-60 edited photos, online gallery'
-      }
-    ],
-    portfolio: [
-      {
-        id: 1,
-        image: 'https://images.unsplash.com/photo-1730116309939-10a01fdf1edb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWRkaW5nJTIwcGhvdG9ncmFwaHklMjBjb3VwbGV8ZW58MXx8fHwxNzU3Mzk0MjE1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'wedding',
-        title: 'Golden Hour Wedding'
-      },
-      {
-        id: 2,
-        image: 'https://images.unsplash.com/photo-1586796676778-2c50b6bc3937?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHBob3RvZ3JhcGhlciUyMHN0dWRpb3xlbnwxfHx8fDE3NTc0MTU1Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'portrait',
-        title: 'Studio Portrait Session'
-      },
-      {
-        id: 3,
-        image: 'https://images.unsplash.com/photo-1502514463321-f81bd30cd473?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYW1lcmElMjBwaG90b2dyYXBoZXIlMjB3b3Jrc3BhY2V8ZW58MXx8fHwxNzU3NDE1NTM5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'engagement',
-        title: 'Outdoor Engagement'
-      },
-      {
-        id: 4,
-        image: 'https://images.unsplash.com/photo-1656918566254-957a997dbd7a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiaXJ0aGRheSUyMHBhcnR5JTIwcGhvdG9ncmFwaHl8ZW58MXx8fHwxNzU3NDE1NTM5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'event',
-        title: 'Birthday Celebration'
-      },
-      {
-        id: 5,
-        image: 'https://images.unsplash.com/photo-1705544363562-cdf94dd458cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3Jwb3JhdGUlMjBldmVudCUyMHBob3RvZ3JhcGh5fGVufDF8fHx8MTc1NzM5Mzk5OXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'corporate',
-        title: 'Corporate Event'
-      },
-      {
-        id: 6,
-        image: 'https://images.unsplash.com/photo-1730116309939-10a01fdf1edb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWRkaW5nJTIwcGhvdG9ncmFwaHklMjBjb3VwbGV8ZW58MXx8fHwxNzU3Mzk0MjE1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-        category: 'wedding',
-        title: 'Ceremony Moments'
-      }
-    ],
-    testimonials: [
-      {
-        name: 'Emily & David',
-        event: 'Wedding Photography',
-        rating: 5,
-        comment: 'Sarah captured our wedding day perfectly! Her attention to detail and ability to capture candid moments made our photos absolutely stunning. Highly recommended!'
-      },
-      {
-        name: 'Jessica Miller',
-        event: 'Family Portrait',
-        rating: 5,
-        comment: 'Professional, patient, and incredibly talented. Sarah made our family session fun and comfortable, and the results exceeded our expectations.'
-      },
-      {
-        name: 'Mark Thompson',
-        event: 'Corporate Event',
-        rating: 5,
-        comment: 'Sarah delivered exceptional photos for our company event. Professional, punctual, and the photos perfectly captured the atmosphere of our celebration.'
-      }
-    ]
-  };
+  // Use fetched photographer data or fallback to null
+  if (!photographer) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading photographer profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   const filteredPortfolio = selectedCategory === 'all' 
     ? photographer.portfolio 
@@ -212,7 +198,7 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
             <div className="relative">
               <ImageWithFallback
                 src={photographer.image}
-                alt={photographer.name}
+                alt={photographer.businessName}
                 className="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover border-4 border-background shadow-lg"
               />
               {photographer.verified && (
@@ -226,13 +212,33 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{photographer.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{photographer.businessName}</h1>
                   <p className="text-xl text-muted-foreground mb-4">{photographer.title}</p>
                   
                   <div className="flex flex-wrap items-center gap-4 mb-4">
                     <div className="flex items-center space-x-1">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{photographer.location}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAvailabilityManager(true)}
+                        className="text-xs"
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Manage Availability
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBookingManager(true)}
+                        className="text-xs"
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Manage Bookings
+                      </Button>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -259,13 +265,23 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                     whileTap={{ scale: 0.98 }}
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
-                    <Button 
-                      size="lg"
-                      onClick={() => setShowContactForm(true)}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:shadow-lg"
-                    >
-                      Contact Photographer
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button 
+                        size="lg"
+                        onClick={() => setShowBookingCalendar(true)}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:shadow-lg flex-1"
+                      >
+                        Book Now
+                      </Button>
+                      <Button 
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setShowContactForm(true)}
+                        className="flex-1"
+                      >
+                        Contact
+                      </Button>
+                    </div>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.02 }}
@@ -299,21 +315,21 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Award className="h-5 w-5 text-primary mr-1" />
-                    <span className="text-xl font-bold">{photographer.yearsExperience}</span>
+                    <span className="text-xl font-bold">8</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Years Experience</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Users className="h-5 w-5 text-primary mr-1" />
-                    <span className="text-xl font-bold">{photographer.totalClients}+</span>
+                    <span className="text-xl font-bold">450+</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Happy Clients</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center mb-1">
                     <Clock className="h-5 w-5 text-primary mr-1" />
-                    <span className="text-xl font-bold">{photographer.responseTime}</span>
+                    <span className="text-xl font-bold">&lt; 2 hours</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Response Time</p>
                 </div>
@@ -465,26 +481,32 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                   <div>
                     <h4 className="font-semibold mb-2">Awards & Recognition</h4>
                     <div className="space-y-1">
-                      {photographer.awards.map((award, index) => (
+                      {photographer.awards?.map((award, index) => (
                         <div key={index} className="flex items-center space-x-2">
                           <Award className="h-4 w-4 text-primary" />
                           <span className="text-sm">{award}</span>
                         </div>
-                      ))}
+                      )) || (
+                        <p className="text-sm text-muted-foreground">No awards listed</p>
+                      )}
                     </div>
                   </div>
 
                   <div>
                     <h4 className="font-semibold mb-2">Connect</h4>
                     <div className="flex flex-wrap gap-4">
-                      <a href="#" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
-                        <Globe className="h-4 w-4" />
-                        <span className="text-sm">{photographer.website}</span>
-                      </a>
-                      <a href="#" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
-                        <Instagram className="h-4 w-4" />
-                        <span className="text-sm">{photographer.instagram}</span>
-                      </a>
+                      {photographer.website && (
+                        <a href="#" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
+                          <Globe className="h-4 w-4" />
+                          <span className="text-sm">{photographer.website}</span>
+                        </a>
+                      )}
+                      {photographer.instagram && (
+                        <a href="#" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
+                          <Instagram className="h-4 w-4" />
+                          <span className="text-sm">{photographer.instagram}</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -514,12 +536,21 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-primary mb-2">{service.price}</p>
-                        <Button 
-                          onClick={() => setShowContactForm(true)}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          Book Now
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => setShowBookingCalendar(true)}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 flex-1"
+                          >
+                            Book Now
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setShowContactForm(true)}
+                            className="flex-1"
+                          >
+                            Contact
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -538,7 +569,7 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
             </div>
 
             <div className="space-y-6">
-              {photographer.testimonials.map((testimonial, index) => (
+              {photographer.testimonials?.map((testimonial, index) => (
                 <Card key={index}>
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
@@ -564,7 +595,13 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) || (
+                <Card>
+                  <CardContent className="p-6">
+                    <p className="text-muted-foreground text-center">No testimonials available yet</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -576,7 +613,7 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md">
             <CardContent className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Contact {photographer.name}</h3>
+              <h3 className="text-xl font-semibold mb-4">Contact {photographer.businessName}</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Your Name</label>
@@ -616,6 +653,35 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Booking Calendar Modal */}
+      {showBookingCalendar && photographer && (
+        <BookingCalendar
+          photographerId={photographer.id}
+          photographerName={photographer.businessName}
+          photographerLocation={photographer.location}
+          photographerPhone={photographer.phone || ''}
+          photographerEmail={photographer.email || ''}
+          onBookingSubmit={handleBookingSubmit}
+          onClose={() => setShowBookingCalendar(false)}
+        />
+      )}
+
+      {/* Availability Manager Modal */}
+      {showAvailabilityManager && photographer && (
+        <AvailabilityManager
+          photographerId={photographer.id}
+          onClose={() => setShowAvailabilityManager(false)}
+        />
+      )}
+
+      {/* Booking Manager Modal */}
+      {showBookingManager && photographer && (
+        <BookingManager
+          photographerId={photographer.id}
+          onClose={() => setShowBookingManager(false)}
+        />
       )}
     </div>
   );

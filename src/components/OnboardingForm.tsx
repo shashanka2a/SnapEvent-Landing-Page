@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from './ui/checkbox';
 import { Progress } from './ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
+import { photographersAPI } from '../lib/api';
 
 interface OnboardingFormProps {
   onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
@@ -112,17 +113,47 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Here you would typically submit to backend
-    console.log(isEditMode ? 'Profile updated:' : 'Profile created instantly:', formData);
-    // Show success message and navigate to portfolio
-    alert(isEditMode ? 'Profile updated successfully!' : 'Profile created successfully! Your portfolio is now live.');
-    // Navigate to portfolio page to show the created/updated profile
-    onNavigate('portfolio', '1'); // Using photographer ID '1' for demo
-    
-    setIsSubmitting(false);
+    try {
+      // Create photographer profile data
+      const photographerData = {
+        userId: 'temp-user-id', // In real app, this would come from auth context
+        businessName: `${formData.firstName} ${formData.lastName} Photography`,
+        title: formData.specialties.join(' & ') || 'Professional Photographer',
+        location: formData.location,
+        bio: formData.portfolioDescription || 'Professional photographer passionate about capturing special moments.',
+        specialties: formData.specialties,
+        services: formData.services.map(service => ({
+          name: service,
+          description: `Professional ${service.toLowerCase()} services`,
+          price: formData.priceRange || 'Contact for pricing',
+          duration: 'Varies',
+          deliverables: 'High-quality edited photos'
+        })),
+        portfolio: [] // Would be populated with uploaded images
+      };
+
+      if (isEditMode) {
+        // Update existing photographer profile
+        await photographersAPI.update('1', photographerData);
+        alert('Profile updated successfully!');
+      } else {
+        // Create new photographer profile
+        const response = await photographersAPI.create(photographerData);
+        alert('Profile created successfully! Your portfolio is now live.');
+        // Navigate to portfolio page with the new photographer ID
+        onNavigate('portfolio', response.id);
+        return;
+      }
+      
+      // Navigate to portfolio page
+      onNavigate('portfolio', '1');
+      
+    } catch (error) {
+      console.error('Failed to submit profile:', error);
+      alert('Failed to save profile. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const stepVariants = {
