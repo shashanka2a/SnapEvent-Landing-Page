@@ -253,12 +253,13 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Phone Number</label>
+              <label className="block text-sm font-medium mb-2">Phone Number *</label>
               <Input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="+1 (555) 123-4567"
+                required
               />
             </div>
 

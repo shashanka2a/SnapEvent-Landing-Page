@@ -15,7 +15,7 @@ async function signupHandler(req: NextApiRequest, res: NextApiResponse) {
         data: {
           first_name: firstName,
           last_name: lastName,
-          phone: phone || null
+          phone: phone
         }
       }
     })
@@ -36,7 +36,7 @@ async function signupHandler(req: NextApiRequest, res: NextApiResponse) {
         email,
         first_name: firstName,
         last_name: lastName,
-        phone: phone || null,
+        phone: phone,
         role: role.toUpperCase()
       })
       .select()
@@ -70,5 +70,10 @@ export default withValidation([
   commonValidations.password,
   commonValidations.firstName,
   commonValidations.lastName,
-  commonValidations.phone
+  {
+    field: 'phone',
+    required: true,
+    type: 'string' as const,
+    pattern: /^\+?[\d\s\-\(\)]+$/
+  }
 ])(signupHandler)

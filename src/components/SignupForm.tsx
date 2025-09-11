@@ -48,6 +48,14 @@ export function SignupForm({ onSignupSuccess, onBack }: SignupFormProps) {
       setError('Please enter a valid email address');
       return false;
     }
+    if (!formData.phone.trim()) {
+      setError('Phone number is required');
+      return false;
+    }
+    if (!/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
+      setError('Please enter a valid phone number');
+      return false;
+    }
     if (!formData.password) {
       setError('Password is required');
       return false;
@@ -195,7 +203,7 @@ export function SignupForm({ onSignupSuccess, onBack }: SignupFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Phone Number (Optional)</label>
+                <label className="block text-sm font-medium mb-2">Phone Number *</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
@@ -204,6 +212,7 @@ export function SignupForm({ onSignupSuccess, onBack }: SignupFormProps) {
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="+1 (555) 123-4567"
                     className="pl-10"
+                    required
                   />
                 </div>
               </div>
