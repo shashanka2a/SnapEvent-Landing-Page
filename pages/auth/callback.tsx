@@ -13,9 +13,9 @@ export default function AuthCallback() {
         error,
       } = await supabase.auth.getSession()
 
-      // If session exists after verification, redirect to onboarding
+      // If session exists after verification, redirect to user type selection
       if (!error && session) {
-        router.replace('/onboarding')
+        router.replace('/signup')
         return
       }
 
@@ -23,7 +23,7 @@ export default function AuthCallback() {
       const hash = window.location.hash
       if (hash.includes('access_token')) {
         // Session should be set; attempt redirect regardless
-        router.replace('/onboarding')
+        router.replace('/signup')
       } else {
         // If no token found, send to signin
         router.replace('/auth/signin')

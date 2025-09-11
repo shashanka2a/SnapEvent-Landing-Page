@@ -12,7 +12,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { photographersAPI, type Photographer } from '../lib/api';
 
 interface LandingPageProps {
-  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
+  onNavigate: (page: 'landing' | 'onboarding' | 'portfolio' | 'signup', photographerId?: string) => void;
   onPhotographerSelect: (id: string) => void;
 }
 
@@ -206,10 +206,10 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
               <motion.div {...scaleOnHover}>
                 <Button 
                   size="sm" 
-                  onClick={() => onNavigate('onboarding')}
+                  onClick={() => onNavigate('signup')}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  Join as Photographer
+                  Get Started
                 </Button>
               </motion.div>
             </motion.div>
@@ -298,10 +298,10 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
                       size="sm" 
-                      onClick={() => onNavigate('onboarding')}
+                      onClick={() => onNavigate('signup')}
                       className="bg-primary text-primary-foreground hover:bg-primary/90 justify-start"
                     >
-                      Join as Photographer
+                      Get Started
                     </Button>
                   </motion.div>
                 </motion.div>
@@ -649,9 +649,9 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => onNavigate('onboarding')}
+                onClick={() => onNavigate('signup')}
               >
-                Join as Photographer
+                Get Started
               </Button>
             </motion.div>
           </motion.div>

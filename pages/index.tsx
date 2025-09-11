@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LandingPage } from '../src/components/LandingPage';
 import { OnboardingForm } from '../src/components/OnboardingForm';
 import { PortfolioPage } from '../src/components/PortfolioPage';
+import { GeneralizedSignupFlow } from '../src/components/GeneralizedSignupFlow';
 
-type Page = 'landing' | 'onboarding' | 'portfolio';
+type Page = 'landing' | 'onboarding' | 'portfolio' | 'signup';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
@@ -23,6 +24,16 @@ export default function Home() {
       setIsEditMode(true);
     } else if (page === 'onboarding' && currentPage === 'landing') {
       setIsEditMode(false);
+    }
+  };
+
+  const handleSignupComplete = (userType: 'CLIENT' | 'PHOTOGRAPHER') => {
+    if (userType === 'PHOTOGRAPHER') {
+      // Navigate to portfolio for photographers
+      navigateTo('portfolio', 'new-photographer');
+    } else {
+      // Navigate back to landing for clients
+      navigateTo('landing');
     }
   };
 
@@ -66,6 +77,21 @@ export default function Home() {
             transition={pageTransition}
           >
             <OnboardingForm onNavigate={navigateTo} isEditMode={isEditMode} />
+          </motion.div>
+        )}
+        {currentPage === 'signup' && (
+          <motion.div
+            key="signup"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            <GeneralizedSignupFlow 
+              onComplete={handleSignupComplete}
+              onBack={() => navigateTo('landing')}
+            />
           </motion.div>
         )}
         {currentPage === 'portfolio' && (
