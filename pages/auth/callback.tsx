@@ -15,7 +15,21 @@ export default function AuthCallback() {
 
       // If session exists after verification, redirect to user type selection
       if (!error && session) {
-        router.replace('/signup')
+        // Check if user already has a role set
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+
+        if (userData?.role === 'PHOTOGRAPHER') {
+          router.replace('/onboarding')
+        } else if (userData?.role === 'CLIENT') {
+          router.replace('/')
+        } else {
+          // No role set, go to user type selection
+          router.replace('/signup?step=userType')
+        }
         return
       }
 
@@ -23,7 +37,7 @@ export default function AuthCallback() {
       const hash = window.location.hash
       if (hash.includes('access_token')) {
         // Session should be set; attempt redirect regardless
-        router.replace('/signup')
+        router.replace('/signup?step=userType')
       } else {
         // If no token found, send to signin
         router.replace('/auth/signin')
