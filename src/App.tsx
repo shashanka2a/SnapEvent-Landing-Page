@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { OnboardingForm } from './components/OnboardingForm';
 import { PortfolioPage } from './components/PortfolioPage';
+import { GeneralizedSignupFlow } from './components/GeneralizedSignupFlow';
 
-type Page = 'landing' | 'onboarding' | 'portfolio';
+type Page = 'landing' | 'onboarding' | 'portfolio' | 'signup';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
@@ -13,6 +14,16 @@ export default function App() {
     setCurrentPage(page);
     if (photographerId) {
       setSelectedPhotographerId(photographerId);
+    }
+  };
+
+  const handleSignupComplete = (userType: 'CLIENT' | 'PHOTOGRAPHER') => {
+    if (userType === 'PHOTOGRAPHER') {
+      // Navigate to portfolio for photographers
+      navigateTo('portfolio', 'new-photographer');
+    } else {
+      // Navigate back to landing for clients
+      navigateTo('landing');
     }
   };
 
@@ -31,6 +42,12 @@ export default function App() {
         <PortfolioPage 
           photographerId={selectedPhotographerId}
           onNavigate={navigateTo}
+        />
+      )}
+      {currentPage === 'signup' && (
+        <GeneralizedSignupFlow 
+          onComplete={handleSignupComplete}
+          onBack={() => navigateTo('landing')}
         />
       )}
     </div>
