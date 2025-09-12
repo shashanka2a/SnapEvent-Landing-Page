@@ -176,30 +176,59 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
               className="hidden md:flex items-center space-x-8"
               {...slideInFromRight}
             >
-              <motion.a 
-                href="#" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+              <motion.button 
+                onClick={() => {
+                  const element = document.getElementById('trending-photographers');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 Find Photographers
-              </motion.a>
-              <motion.a 
-                href="#" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+              </motion.button>
+              <motion.button 
+                onClick={() => {
+                  // Scroll to how it works section (we'll add this)
+                  const element = document.getElementById('how-it-works');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    // Fallback: scroll to categories section
+                    const element = document.getElementById('categories');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 How it Works
-              </motion.a>
-              <motion.a 
-                href="#" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+              </motion.button>
+              <motion.button 
+                onClick={() => {
+                  // Scroll to pricing section (we'll add this)
+                  const element = document.getElementById('pricing');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    // Fallback: scroll to CTA section
+                    const element = document.getElementById('cta-section');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 Pricing
-              </motion.a>
+              </motion.button>
               <motion.div {...scaleOnHover}>
                 <Button variant="ghost" size="sm">Sign In</Button>
               </motion.div>
@@ -268,14 +297,19 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.3 }}
                 >
-                  <motion.a 
-                    href="#" 
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  <motion.button 
+                    onClick={() => {
+                      const element = document.getElementById('trending-photographers');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer text-left"
                     whileHover={{ x: 5 }}
                     transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                   >
                     Find Photographers
-                  </motion.a>
+                  </motion.button>
                   <motion.a 
                     href="#" 
                     className="text-muted-foreground hover:text-foreground transition-colors"
@@ -413,7 +447,7 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 px-4">
+      <section id="categories" className="py-16 px-4">
         <div className="container mx-auto">
           <motion.div 
             className="flex items-center justify-between mb-8"
@@ -482,7 +516,7 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
       </section>
 
       {/* Trending Photographers */}
-      <section className="py-16 px-4 bg-muted/20">
+      <section id="trending-photographers" className="py-16 px-4 bg-muted/20">
         <div className="container mx-auto">
           <motion.div 
             className="flex items-center justify-between mb-8"
@@ -613,7 +647,7 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4">
+      <section id="cta-section" className="py-16 px-4">
         <div className="container mx-auto text-center">
           <motion.h2 
             className="text-3xl md:text-4xl font-bold mb-4"
@@ -641,7 +675,17 @@ export function LandingPage({ onNavigate, onPhotographerSelect }: LandingPagePro
             viewport={{ once: true, margin: "-100px" }}
           >
             <motion.div {...scaleOnHover}>
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button 
+                size="lg" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => {
+                  // Scroll to photographers section
+                  const element = document.getElementById('trending-photographers');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 Find Photographers
               </Button>
             </motion.div>
