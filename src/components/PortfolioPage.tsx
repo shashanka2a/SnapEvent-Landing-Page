@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Star, MapPin, Calendar, Camera, Phone, Mail, Instagram, Globe, Award, Users, Clock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Calendar, Camera, Phone, Mail, Instagram, Globe, Award, Users, Clock, CheckCircle, Share2, Copy, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
@@ -27,8 +27,10 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
   const [showAvailabilityManager, setShowAvailabilityManager] = useState(false);
   const [showBookingManager, setShowBookingManager] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(true);
+  const [showSharePopup, setShowSharePopup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [photographer, setPhotographer] = useState<Photographer | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // Booking submission handler
   const handleBookingSubmit = async (bookingData: any) => {
@@ -48,6 +50,53 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
     } catch (error) {
       console.error('Failed to submit booking:', error);
       alert('Failed to submit booking. Please try again.');
+    }
+  };
+
+  // Generate portfolio URL
+  const generatePortfolioUrl = () => {
+    const baseUrl = window.location.origin;
+    const portfolioPath = `/photographer/${photographer?.businessName?.toLowerCase().replace(/\s+/g, '-') || photographerId}`;
+    return `${baseUrl}${portfolioPath}`;
+  };
+
+  // Copy URL to clipboard
+  const copyToClipboard = async () => {
+    try {
+      const url = generatePortfolioUrl();
+      await navigator.clipboard.writeText(url);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = generatePortfolioUrl();
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
+  };
+
+  // Share via Web Share API or fallback
+  const handleShare = async () => {
+    const url = generatePortfolioUrl();
+    const title = `${photographer?.businessName || 'Photographer'} - SnapEvent Portfolio`;
+    const text = `Check out ${photographer?.businessName || 'this photographer'}'s portfolio on SnapEvent!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          setShowSharePopup(true);
+        }
+      }
+    } else {
+      setShowSharePopup(true);
     }
   };
 
@@ -104,6 +153,17 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
 
     fetchPhotographer();
   }, [photographerId]);
+
+  // Auto-show share popup after success banner is displayed
+  React.useEffect(() => {
+    if (showSuccessBanner) {
+      const timer = setTimeout(() => {
+        setShowSharePopup(true);
+      }, 3000); // Show share popup after 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessBanner]);
 
   const SkeletonCard = () => (
     <motion.div
@@ -391,6 +451,22 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
                     >
                       Your portfolio is now live and ready to receive bookings.
                     </motion.p>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5, duration: 0.3 }}
+                      className="mt-2"
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleShare}
+                        className="text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-950/20 transition-colors duration-200"
+                      >
+                        <Share2 className="h-3 w-3 mr-1" />
+                        Share Your Portfolio
+                      </Button>
+                    </motion.div>
                   </div>
                 </motion.div>
                 <motion.div
@@ -682,6 +758,131 @@ export function PortfolioPage({ photographerId, onNavigate }: PortfolioPageProps
           photographerId={photographer.id}
           onClose={() => setShowBookingManager(false)}
         />
+      )}
+
+      {/* Share Portfolio Popup */}
+      {showSharePopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card className="w-full max-w-md">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Share2 className="h-5 w-5 mr-2 text-primary" />
+                    Share Your Portfolio
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSharePopup(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Portfolio URL</label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={generatePortfolioUrl()}
+                        readOnly
+                        className="flex-1 bg-muted/50"
+                      />
+                      <Button
+                        onClick={copyToClipboard}
+                        size="sm"
+                        variant={copySuccess ? "default" : "outline"}
+                        className={copySuccess ? "bg-green-600 text-white" : ""}
+                      >
+                        {copySuccess ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-1" />
+                            Copy
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <p className="text-sm text-muted-foreground mb-3">Share on social media:</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const url = encodeURIComponent(generatePortfolioUrl());
+                          const text = encodeURIComponent(`Check out ${photographer?.businessName || 'this photographer'}'s portfolio on SnapEvent!`);
+                          window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+                        }}
+                        className="flex items-center justify-center"
+                      >
+                        <Phone className="h-4 w-4 mr-1" />
+                        WhatsApp
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const url = encodeURIComponent(generatePortfolioUrl());
+                          const text = encodeURIComponent(`Check out ${photographer?.businessName || 'this photographer'}'s portfolio on SnapEvent!`);
+                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+                        }}
+                        className="flex items-center justify-center"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Facebook
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const url = encodeURIComponent(generatePortfolioUrl());
+                          const text = encodeURIComponent(`Check out ${photographer?.businessName || 'this photographer'}'s portfolio on SnapEvent!`);
+                          window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+                        }}
+                        className="flex items-center justify-center"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Twitter
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const url = encodeURIComponent(generatePortfolioUrl());
+                          window.open(`https://www.instagram.com/`, '_blank');
+                        }}
+                        className="flex items-center justify-center"
+                      >
+                        <Instagram className="h-4 w-4 mr-1" />
+                        Instagram
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center pt-2">
+                    <p className="text-xs text-muted-foreground">
+                      Share your portfolio to get more bookings! 📸
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       )}
     </div>
   );

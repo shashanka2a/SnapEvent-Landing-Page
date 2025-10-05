@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Camera, CheckCircle, Upload, MapPin, User, Briefcase, DollarSign } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -11,6 +11,42 @@ import { Progress } from './ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { photographersAPI } from '../lib/api';
 
+interface FormData {
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  location: string;
+  cameraManufacturer: string;
+  cameraModel: string;
+  lenses: string;
+  photographerType: string;
+  experience: string;
+  photoTypes: string[];
+  otherPhotoText: string;
+  additionalServices: string[];
+  otherSoftwareText: string;
+  otherHardwareText: string;
+  samplePhotos: string;
+  startingPrice: string;
+  language: string;
+  rankedPhotoTypes: string;
+  rankedAdditionalServices: string;
+  // Legacy fields for compatibility
+  firstName: string;
+  lastName: string;
+  phone: string;
+  profilePicture: File | null;
+  specialties: string[];
+  equipment: string;
+  website: string;
+  services: string[];
+  priceRange: string;
+  availability: string;
+  portfolioDescription: string;
+  instagramHandle: string;
+  workSamples: File[];
+}
+
 interface OnboardingFormProps {
   onNavigate: (page: 'landing' | 'onboarding' | 'portfolio', photographerId?: string) => void;
   isEditMode?: boolean;
@@ -19,33 +55,67 @@ interface OnboardingFormProps {
 export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    // Personal Info
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [currentLang, setCurrentLang] = useState<'en' | 'te'>('te');
+  const [priceError, setPriceError] = useState('');
+  const [showOtherPhotoText, setShowOtherPhotoText] = useState(false);
+  const [showOtherSoftwareText, setShowOtherSoftwareText] = useState(false);
+  const [showOtherHardwareText, setShowOtherHardwareText] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    // Bilingual form fields
+    fullName: '',
+    phoneNumber: '',
+    email: '',
+    location: '',
+    cameraManufacturer: '',
+    cameraModel: '',
+    lenses: '',
+    photographerType: '',
+    experience: '',
+    photoTypes: [],
+    otherPhotoText: '',
+    additionalServices: [],
+    otherSoftwareText: '',
+    otherHardwareText: '',
+    samplePhotos: '',
+    startingPrice: '',
+    language: '',
+    rankedPhotoTypes: '',
+    rankedAdditionalServices: '',
+    // Legacy compatibility fields
     firstName: '',
     lastName: '',
-    email: '',
     phone: '',
-    location: '',
-    profilePicture: null as File | null,
-    
-    // Professional Info
-    experience: '',
-    specialties: [] as string[],
+    profilePicture: null,
+    specialties: [],
     equipment: '',
     website: '',
-    
-    // Services & Pricing
-    services: [] as string[],
+    services: [],
     priceRange: '',
     availability: '',
-    
-    // Portfolio
     portfolioDescription: '',
     instagramHandle: '',
-    workSamples: [] as File[]
+    workSamples: []
   });
 
-  const totalSteps = 5;
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      setIsDarkMode(false);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+  };
+
+  const toggleLanguage = () => {
+    setCurrentLang(currentLang === 'en' ? 'te' : 'en');
+  };
+
+  const totalSteps = 6; // Updated to include bilingual form fields
   const progress = (currentStep / totalSteps) * 100;
 
   const specialtyOptions = [
@@ -61,6 +131,96 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: FormData) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'photoTypes' | 'additionalServices') => {
+    const { value, checked, id } = e.target;
+    
+    setFormData((prev: FormData) => {
+      const currentArray = prev[fieldName];
+      let newArray;
+      
+      if (checked) {
+        // Limit to 2 selections
+        if (currentArray.length < 2) {
+          newArray = [...currentArray, value];
+        } else {
+          return prev; // Don't add if already 2 selected
+        }
+      } else {
+        newArray = currentArray.filter((item: string) => item !== value);
+      }
+      
+      // Update ranked list
+      setTimeout(() => updateRankedList(fieldName, newArray), 0);
+      
+      return { ...prev, [fieldName]: newArray };
+    });
+
+    // Handle 'Other' text field visibility
+    if (value === 'Other' && fieldName === 'photoTypes') {
+      setShowOtherPhotoText(checked);
+      if (!checked) setFormData((prev: FormData) => ({ ...prev, otherPhotoText: '' }));
+    } else if (id === 'otherSoftware') {
+      setShowOtherSoftwareText(checked);
+      if (!checked) setFormData((prev: FormData) => ({ ...prev, otherSoftwareText: '' }));
+    } else if (id === 'otherHardware') {
+      setShowOtherHardwareText(checked);
+      if (!checked) setFormData((prev: FormData) => ({ ...prev, otherHardwareText: '' }));
+    }
+  };
+
+  const getPlaceholder = (key: string): string => {
+    const placeholders: Record<string, {en: string, te: string}> = {
+      lenses: {
+        en: "e.g., Canon 24-70mm f/2.8, Sigma 50mm f/1.4 Art",
+        te: "ఉదా., కెనాన్ 24-70మిమీ f/2.8, సిగ్మా 50మిమీ f/1.4 ఆర్ట్"
+      },
+      otherPhotoText: {
+        en: "e.g., Corporate, Events, Birthday",
+        te: "ఉదా., కార్పొరేట్, ఈవెంట్స్, పుట్టినరోజు"
+      },
+      otherSoftwareText: {
+        en: "e.g., Photo Editing, Logo Designing",
+        te: "ఉదా., ఫోటో ఎడిటింగ్, లోగో డిజైనింగ్"
+      },
+      otherHardwareText: {
+        en: "e.g., Special Cameras, Green Screen",
+        te: "ఉదా., ప్రత్యేక కెమెరాలు, గ్రీన్ స్క్రీన్"
+      },
+      samplePhotos: {
+        en: "Paste your Google Drive link here",
+        te: "Google Drive లింక్‌ను ఇక్కడ అతికించండి"
+      },
+      startingPrice: {
+        en: "₹20,000",
+        te: "₹20,000"
+      }
+    };
+    return placeholders[key]?.[currentLang as keyof typeof placeholders[string]] || '';
+  };
+
+  const updateRankedList = (fieldName: 'photoTypes' | 'additionalServices', checkedValues: string[]) => {
+    const rankedList: string[] = [];
+    checkedValues.forEach((value, index) => {
+      let displayValue = value;
+      if (value === 'Other' && fieldName === 'photoTypes' && formData.otherPhotoText.trim() !== '') {
+        displayValue = formData.otherPhotoText.trim();
+      } else if (value === 'Other' && fieldName === 'additionalServices' && formData.otherSoftwareText.trim() !== '') {
+        displayValue = formData.otherSoftwareText.trim();
+      } else if (value === 'Other Hardware' && fieldName === 'additionalServices' && formData.otherHardwareText.trim() !== '') {
+        displayValue = formData.otherHardwareText.trim();
+      }
+      rankedList.push(`${index + 1}. ${displayValue}`);
+    });
+    
+    const rankedFieldName = fieldName === 'photoTypes' ? 'rankedPhotoTypes' : 'rankedAdditionalServices';
+    setFormData((prev: FormData) => ({ ...prev, [rankedFieldName]: rankedList.join(', ') }));
   };
 
   const handleSpecialtyToggle = (specialty: string) => {
@@ -110,47 +270,53 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    // Price validation for bilingual form
+    const priceValue = formData.startingPrice.replace(/[^0-9]/g, '');
+    const price = parseInt(priceValue, 10);
+    
+    if (isNaN(price) || price < 20000) {
+      setPriceError(currentLang === 'te' 
+        ? 'కనీసం ప్రారంభ ధర ₹20,000 లేదా అంతకంటే ఎక్కువ ఉండాలి.' 
+        : 'Minimum starting price must be ₹20,000 or more.');
+      return;
+    }
+    
+    setPriceError('');
     setIsSubmitting(true);
     
     try {
-      // Create photographer profile data
-      const photographerData = {
-        userId: 'temp-user-id', // In real app, this would come from auth context
-        businessName: `${formData.firstName} ${formData.lastName} Photography`,
-        title: formData.specialties.join(' & ') || 'Professional Photographer',
-        location: formData.location,
-        bio: formData.portfolioDescription || 'Professional photographer passionate about capturing special moments.',
-        specialties: formData.specialties,
-        services: formData.services.map(service => ({
-          name: service,
-          description: `Professional ${service.toLowerCase()} services`,
-          price: formData.priceRange || 'Contact for pricing',
-          duration: 'Varies',
-          deliverables: 'High-quality edited photos'
-        })),
-        portfolio: [] // Would be populated with uploaded images
-      };
+      // Use bilingual /api/submit for the detailed form
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (isEditMode) {
-        // Update existing photographer profile
-        await photographersAPI.update('1', photographerData);
-        alert('Profile updated successfully!');
-      } else {
-        // Create new photographer profile
-        const response = await photographersAPI.create(photographerData);
-        alert('Profile created successfully! Your portfolio is now live.');
-        // Navigate to portfolio page with the new photographer ID
-        onNavigate('portfolio', response.id);
+      if (response.ok) {
+        // Create photographer profile data from the submitted bilingual form
+        const newPhotographerId = `photographer-${Date.now()}`; // Generate unique ID
+        
+        // Success message
+        alert(currentLang === 'te' 
+          ? 'మీ వివరాలు విజయవంతంగా సమర్పించబడ్డాయి! మా బృందం త్వరలోనే మిమ్మల్ని సంప్రదిస్తుంది.'
+          : 'Your details have been submitted successfully! Your portfolio is now being created.');
+        
+        // Navigate to portfolio page with success state
+        onNavigate('portfolio', newPhotographerId);
         return;
+      } else {
+        throw new Error('Submission failed');
       }
-      
-      // Navigate to portfolio page
-      onNavigate('portfolio', '1');
-      
     } catch (error) {
-      console.error('Failed to submit profile:', error);
-      alert('Failed to save profile. Please try again.');
+      console.error('Error submitting form:', error);
+      alert(currentLang === 'te' 
+        ? 'ఫారమ్ సమర్పించడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.'
+        : 'Failed to submit form. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,96 +348,104 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
             className="space-y-6"
           >
             <div className="text-center mb-8">
-              <User className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
-              <p className="text-muted-foreground">Let's start with the basics</p>
-            </div>
-
-            {/* Profile Picture Upload */}
-            <div className="flex flex-col items-center mb-6">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-muted-foreground/25">
-                  {formData.profilePicture ? (
-                    <img
-                      src={URL.createObjectURL(formData.profilePicture)}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Camera className="h-8 w-8 text-muted-foreground" />
-                  )}
-                </div>
-                <label
-                  htmlFor="profile-picture"
-                  className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors"
-                >
-                  <Upload className="h-4 w-4" />
-                </label>
-                <input
-                  id="profile-picture"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfilePictureChange}
-                  className="hidden"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {formData.profilePicture ? 'Profile picture uploaded' : 'Upload your profile picture'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Recommended: Square image, max 5MB
+              <User className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">
+                {currentLang === 'te' ? 'వ్యక్తిగత వివరాలు' : 'Personal Information'}
+              </h2>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                {currentLang === 'te' ? 'మూలభూత వివరాలతో ప్రారంభించాలి' : "Let's start with the basics"}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">First Name</label>
-                <Input
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Last Name</label>
-                <Input
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Email Address</label>
+            {/* Full Name */}
+            <div className="form-group">
+              <label htmlFor="fullName" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'పూర్తి పేరు' : 'Full Name'}
+              </label>
               <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="your.email@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Phone Number *</label>
-              <Input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleFormInputChange}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Location</label>
+            {/* Phone Number */}
+            <div className="form-group">
+              <label htmlFor="phoneNumber" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'ఫోన్ నంబర్ (వాట్సాప్ ఉత్తమం)' : 'Phone Number (WhatsApp preferred)'}
+              </label>
+              <Input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleFormInputChange}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div className="form-group">
+              <label htmlFor="email" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'ఈమెయిల్ చిరునామా' : 'Email Address'}
+              </label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleFormInputChange}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
+                required
+              />
+            </div>
+
+            {/* Location */}
+            <div className="form-group">
+              <label htmlFor="location" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'ప్రాంతం (గ్రామం/పట్టణం, జిల్లా, రాష్ట్రం)' : 'Location (Village/Town, District, State)'}
+              </label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <MapPin className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`} />
                 <Input
+                  type="text"
+                  id="location"
+                  name="location"
                   value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  placeholder="City, State/Country"
-                  className="pl-10"
+                  onChange={handleFormInputChange}
+                  className={`mt-1 block w-full pl-10 px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                      : 'bg-white text-gray-900 border-gray-300'
+                  }`}
+                  required
                 />
               </div>
             </div>
@@ -504,60 +678,90 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
             className="space-y-6"
           >
             <div className="text-center mb-8">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Review & Submit</h2>
-              <p className="text-muted-foreground">Please review your information before submitting</p>
+              <DollarSign className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">
+                {currentLang === 'te' ? 'ప్రారంభ ధర మరియు సేవలు' : 'Pricing & Sample Work'}
+              </h2>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                {currentLang === 'te' ? 'మీ వర్క్ సాంపల్ మరియు ప్రైసింగ్' : 'Your portfolio and pricing information'}
+              </p>
             </div>
 
-              <div className="bg-muted/20 rounded-lg p-6 space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Contact Information</h3>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Name:</strong> {formData.firstName} {formData.lastName}</p>
-                    <p><strong>Email:</strong> {formData.email}</p>
-                    <p><strong>Phone:</strong> {formData.phone}</p>
-                    <p><strong>Location:</strong> {formData.location}</p>
-                    <p><strong>Profile Picture:</strong> {formData.profilePicture ? 'Uploaded' : 'Not provided'}</p>
-                  </div>
+            {/* Sample Photos */}
+            <div className="form-group">
+              <label htmlFor="samplePhotos" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? '3–5 నమూనా ఆల్బమ్‌లు అప్‌లోడ్ చేయండి (Google Drive లింక్)' : 'Upload 3–5 Sample Albums (Google Drive link)'}
+              </label>
+              <Textarea
+                id="samplePhotos"
+                name="samplePhotos"
+                rows={4}
+                value={formData.samplePhotos}
+                onChange={handleFormInputChange}
+                placeholder={getPlaceholder('samplePhotos')}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
+                required
+              />
+            </div>
+
+            {/* Starting Price with ₹20,000 validation */}
+            <div className="form-group">
+              <label htmlFor="startingPrice" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'ప్రారంభ ధర (కనీసం ₹20,000 రోజుకు – ఫోటోలు + వీడియోలు)' : 'Starting Price (Min. ₹20,000 Per Day – Photos + Videos)'}
+              </label>
+              <Input
+                type="text"
+                id="startingPrice"
+                name="startingPrice"
+                value={formData.startingPrice}
+                onChange={handleFormInputChange}
+                placeholder={getPlaceholder('startingPrice')}
+                className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
+                required
+              />
+              {priceError && (
+                <div className="text-red-400 text-sm mt-1">
+                  {priceError}
                 </div>
+              )}
+            </div>
 
-              <div>
-                <h3 className="font-semibold mb-2">Experience & Specialties</h3>
-                <p className="text-sm text-muted-foreground">
-                  {formData.experience} experience • {formData.specialties.join(', ')}
-                </p>
-              </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Services & Pricing</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Starting from {formData.priceRange} • {formData.availability}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Portfolio Information</h3>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Your SnapEvent Portfolio:</strong></p>
-                    <p className="font-mono text-primary bg-muted/50 p-2 rounded">
-                      snapevent.com/photographer/{formData.firstName.toLowerCase()}-{formData.lastName.toLowerCase()}
-                    </p>
-                    {formData.website && (
-                      <p><strong>Current Website:</strong> {formData.website}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Instant Registration</h4>
-              <ul className="text-sm text-green-800 dark:text-green-200 space-y-1">
-                <li>• Your profile will be created instantly upon submission</li>
-                <li>• Your SnapEvent portfolio link will be available immediately</li>
-                <li>• Your profile will go live on SnapEvent right away</li>
-                <li>• Start receiving booking requests from clients instantly</li>
-                <li>• Welcome to the SnapEvent community!</li>
-              </ul>
+            {/* Language Preference */}
+            <div className="form-group">
+              <label htmlFor="language" className={`block text-sm md:text-base font-medium mb-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {currentLang === 'te' ? 'సంవాదానికి ఇష్టమైన భాష' : 'Preferred Language for Communication'}
+              </label>
+              <Select value={formData.language} onValueChange={(value) => handleInputChange('language', value)}>
+                <SelectTrigger className={`mt-1 block w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-100 border-gray-600' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}>
+                  <SelectValue placeholder={
+                    currentLang === 'te' ? 'ఒక ఎంపికను ఎంచుకోండి' : 'Select an option'
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Telugu">Telugu</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </motion.div>
         );
@@ -568,39 +772,87 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gray-900 text-gray-100' 
+        : 'bg-gray-50 text-gray-900'
+    }`}>
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <div className={`border-b transition-colors duration-300 backdrop-blur-sm ${
+        isDarkMode 
+          ? 'border-gray-700 bg-gray-800/50' 
+          : 'border-gray-200 bg-white/50'
+      }`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Camera className="h-8 w-8 text-primary" />
-              <span className="text-xl font-semibold">SnapEvent</span>
+              <Camera className="h-8 w-8 text-blue-500" />
+              <span className="text-xl font-semibold">
+                {currentLang === 'te' ? 'స్నాప్‌ఈవెంట్' : 'SnapEvent'}
+              </span>
             </div>
-            <Button 
-              variant="ghost" 
-              onClick={() => onNavigate('landing')}
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Home</span>
-            </Button>
+            <div className="flex items-center space-x-2">
+              {/* Language Toggle */}
+              <button
+                onClick={toggleLanguage}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {currentLang === 'en' ? 'తెలుగు' : 'English'}
+              </button>
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg text-sm font-semibold transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {isDarkMode ? '🌙' : '☀️'}
+              </button>
+              {/* Back Button */}
+              <Button 
+                variant="ghost" 
+                onClick={() => onNavigate('landing')}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>{currentLang === 'te' ? 'తిరిగి హోమ్‌కు' : 'Back to Home'}</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-card border-b border-border">
+      <div className={`transition-colors duration-300 border-b ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
-            <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
+            <span className="text-sm font-medium">
+              {currentLang === 'te' 
+                ? `అడుగు ${currentStep} / ${totalSteps}` 
+                : `Step ${currentStep} of ${totalSteps}`
+              }
+            </span>
+            <span className={`text-sm ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              {Math.round(progress)}% {currentLang === 'te' ? 'పూర్తి' : 'Complete'}
+            </span>
           </div>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="h-2 bg-primary rounded-full"
+            className="h-2 bg-blue-500 rounded-full"
           />
         </div>
       </div>
@@ -626,7 +878,7 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
                 className="flex items-center space-x-2 transition-all duration-200 hover:shadow-md"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Previous</span>
+                <span>{currentLang === 'te' ? 'ముందుది' : 'Previous'}</span>
               </Button>
             </motion.div>
 
@@ -639,20 +891,20 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-blue-600 text-white hover:bg-blue-700 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full"
+                        className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
                       />
-                      <span>Creating Profile...</span>
+                      <span>{currentLang === 'te' ? 'సమర్పిస్తోంది...' : 'Submitting...'}</span>
                     </>
                   ) : (
                     <>
-                      <span>{isEditMode ? 'Update Profile' : 'Create Profile Instantly'}</span>
+                      <span>{currentLang === 'te' ? 'ఫారమ్ సమర్పించండి' : 'Submit Form'}</span>
                       <CheckCircle className="h-4 w-4" />
                     </>
                   )}
@@ -666,9 +918,9 @@ export function OnboardingForm({ onNavigate, isEditMode = false }: OnboardingFor
               >
                 <Button
                   onClick={nextStep}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg"
+                  className="bg-blue-600 text-white hover:bg-blue-700 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg"
                 >
-                  <span>Next</span>
+                  <span>{currentLang === 'te' ? 'తరువాత' : 'Next'}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </motion.div>
